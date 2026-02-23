@@ -36,10 +36,17 @@ export default function Dashboard() {
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!user) return <p>Cargando...</p>;
 
+  const liveRoomId = user._id || user.id;
+
   return (
     <div>
       <h1>Bienvenido, {user.username}</h1>
       <p>Email: {user.email}</p>
+      <hr />
+      <h2>🔴 Live</h2>
+      <a href={`/live/${liveRoomId}`}>
+        <button>Ir a mi Live</button>
+      </a>
     </div>
   );
 }
