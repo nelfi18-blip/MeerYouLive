@@ -69,7 +69,15 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("disconnect", () => {});
+  socket.on("disconnect", () => {
+    // Update viewer count for all rooms the socket was in
+    for (const room of socket.rooms) {
+      if (room !== socket.id) {
+        const count = io.sockets.adapter.rooms.get(room)?.size || 0;
+        io.to(room).emit("viewers:update", count);
+      }
+    }
+  });
 });
 
 server.listen(PORT, () => {

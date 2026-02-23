@@ -11,4 +11,11 @@ const purchaseSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+purchaseSchema.pre("validate", function (next) {
+  if (!this.video && !this.live) {
+    return next(new Error("Una compra debe estar asociada a un video o a un live"));
+  }
+  next();
+});
+
 export default mongoose.model("Purchase", purchaseSchema);

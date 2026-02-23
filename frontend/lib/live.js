@@ -22,7 +22,12 @@ export const joinLive = async (liveId) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   const json = await res.json();
-  if (!res.ok) throw Object.assign(new Error(json.message || "Error al unirse"), json);
+  if (!res.ok) {
+    const err = new Error(json.message || "Error al unirse");
+    if (json.requiresPurchase) err.requiresPurchase = true;
+    if (json.requiresSubscription) err.requiresSubscription = true;
+    throw err;
+  }
   return json;
 };
 

@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import Live from "../models/Live.js";
 import Purchase from "../models/Purchase.js";
 import Subscription from "../models/Subscription.js";
+import { getIO } from "../socket.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -88,6 +89,7 @@ export const joinLive = async (req, res) => {
       liveToken,
       channel: String(live._id),
       agoraAppId: process.env.AGORA_APP_ID || null,
+      isCreator,
       live,
     });
   } catch (err) {
@@ -105,6 +107,8 @@ export const endLive = async (req, res) => {
     live.status = "ended";
     live.endedAt = new Date();
     await live.save();
+    const io = getIO();
+    if (io) io.to(String(live._id)).emit("live:ended");
     res.json({ message: "Live terminado", live });
   } catch (err) {
     res.status(500).json({ message: err.message });

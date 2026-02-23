@@ -38,6 +38,7 @@ export default function LivePage({ params }) {
       .then((data) => {
         setLive(data.live);
         setLiveToken(data.liveToken);
+        setIsCreator(!!data.isCreator);
 
         const username = localStorage.getItem("username") || "viewer";
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -68,14 +69,6 @@ export default function LivePage({ params }) {
         socket.on("live:ended", () => {
           setError("El live ha terminado");
         });
-
-        // Detect if current user is the creator by decoding userId from token
-        try {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          if (data.live && String(data.live.creator?._id || data.live.creator) === String(payload.id)) {
-            setIsCreator(true);
-          }
-        } catch {}
       })
       .catch((err) => {
         if (err.requiresPurchase) setRequiresPurchase(true);
@@ -104,7 +97,6 @@ export default function LivePage({ params }) {
   const handleEndLive = async () => {
     try {
       await endLive(liveId);
-      if (socketRef.current) socketRef.current.emit("live:ended", liveId);
       window.location.href = "/dashboard";
     } catch (err) {
       setError(err.message);
