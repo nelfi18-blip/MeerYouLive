@@ -7,7 +7,19 @@ import passport from "./config/passport.js";
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL
+  ? [
+      process.env.FRONTEND_URL,
+      process.env.FRONTEND_URL.replace("://", "://www."),
+    ]
+  : [];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(passport.initialize());
 
