@@ -6,6 +6,8 @@ import googleRoutes from "./routes/google.routes.js";
 import passport from "./config/passport.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import webhookRoutes from "./routes/webhook.routes.js";
+import videoRoutes from "./routes/video.routes.js";
+import giftRoutes from "./routes/gift.routes.js";
 
 const app = express();
 
@@ -34,5 +36,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/auth", googleRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/videos", videoRoutes);
+app.use("/api/gifts", giftRoutes);
 
 export default app;
