@@ -1,6 +1,8 @@
 import Stripe from "stripe";
 import Video from "../models/Video.js";
 import Purchase from "../models/Purchase.js";
+import Gift from "../models/Gift.js";
+import { getIO } from "../socket.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -58,17 +60,49 @@ export const handleWebhook = async (req, res) => {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const { userId, videoId, amount } = session.metadata;
+    const { type, userId, videoId, liveId, giftType, amount } = session.metadata;
 
     try {
-      const existing = await Purchase.findOne({ stripeSessionId: session.id });
-      if (!existing) {
-        await Purchase.create({
-          user: userId,
-          video: videoId,
-          amount: parseFloat(amount),
-          stripeSessionId: session.id,
-        });
+      if (type === "gift") {
+        const existing = await Gift.findOne({ stripeSessionId: session.id });
+        if (!existing) {
+          const gift = await Gift.create({
+            sender: userId,
+            live: liveId,
+            type: giftType,
+            amount: parseFloat(amount),
+            stripeSessionId: session.id,
+          });
+          const populatedGift = await gift.populate("sender", "username name");
+          const io = getIO();
+          if (io) {
+            io.to(liveId).emit("gift:received", {
+              giftType,
+              amount: parseFloat(amount),
+              sender: populatedGift.sender,
+            });
+          }
+        }
+      } else if (type === "livePurchase") {
+        const existing = await Purchase.findOne({ stripeSessionId: session.id });
+        if (!existing) {
+          await Purchase.create({
+            user: userId,
+            live: liveId,
+            amount: parseFloat(amount),
+            stripeSessionId: session.id,
+          });
+        }
+      } else {
+        const existing = await Purchase.findOne({ stripeSessionId: session.id });
+        if (!existing) {
+          await Purchase.create({
+            user: userId,
+            video: videoId,
+            amount: parseFloat(amount),
+            stripeSessionId: session.id,
+          });
+        }
       }
     } catch (err) {
       return res.status(500).json({ message: err.message });
