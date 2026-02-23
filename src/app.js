@@ -4,6 +4,7 @@ import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import googleRoutes from "./routes/google.routes.js";
 import passport from "./config/passport.js";
+import videoRoutes from "./routes/video.routes.js";
 
 const app = express();
 
@@ -18,5 +19,6 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/auth", googleRoutes);
+app.use("/api/videos", videoRoutes);
 
 export default app;
