@@ -53,6 +53,8 @@ export default function LoginPage() {
       />
       <button onClick={login}>Entrar</button>
       <a href={process.env.NEXT_PUBLIC_GOOGLE_URL}>Entrar con Google</a>
+      <br />
+      <a href="/register">¿No tienes cuenta? Regístrate</a>
     </div>
   );
 }
