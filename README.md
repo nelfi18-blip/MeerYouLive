@@ -2,6 +2,20 @@
 
 Live streaming platform — [meetyoulive.net](https://meetyoulive.net)
 
+## Demo
+
+👉 **[https://meetyoulive.net](https://meetyoulive.net)**
+
+## Stack
+
+| Layer    | Technology          |
+|----------|---------------------|
+| Frontend | Next.js 16 (React 19) on Vercel |
+| Backend  | Node.js / Express on Render |
+| Database | MongoDB (Mongoose) |
+| Auth     | JWT + Google OAuth 2.0 |
+| Payments | Stripe |
+
 ## Architecture
 
 | Layer    | Service | URL                          |
@@ -65,6 +79,21 @@ In [Google Cloud Console](https://console.cloud.google.com) → **OAuth Client**
 
 - **Authorized Redirect URIs**: `https://api.meetyoulive.net/api/auth/google/callback`
 - **Authorized JavaScript origins**: `https://meetyoulive.net`
+- **App status**: Production
+- **Privacy Policy URL**: `https://meetyoulive.net/privacy`
+- **Terms of Service URL**: `https://meetyoulive.net/terms`
+
+### 4. Legal pages
+
+The following routes are live and required by Stripe and Google OAuth:
+
+| Page                | URL                                     |
+|---------------------|-----------------------------------------|
+| Terms & Conditions  | https://meetyoulive.net/terms           |
+| Privacy Policy      | https://meetyoulive.net/privacy         |
+| Refund Policy       | https://meetyoulive.net/refund          |
+
+In **Stripe Dashboard → Settings → Business details** add these URLs under Public details.
 
 ## Environment variables
 
