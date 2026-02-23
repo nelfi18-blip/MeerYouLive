@@ -8,6 +8,7 @@ const videoSchema = new mongoose.Schema(
     url: { type: String, required: true },
     isPrivate: { type: Boolean, default: false },
     price: { type: Number, default: 0 },
+    teaserUrl: { type: String },
   },
   { timestamps: true }
 );
