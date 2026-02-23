@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import Video from "../models/Video.js";
 import Purchase from "../models/Purchase.js";
+import User from "../models/User.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -76,4 +77,37 @@ export const handleWebhook = async (req, res) => {
   }
 
   res.json({ received: true });
+};
+
+export const buyWithCoins = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.videoId);
+    if (!video) return res.status(404).json({ message: "Vídeo no encontrado" });
+    if (!video.isPrivate || video.price <= 0) {
+      return res.status(400).json({ message: "Este vídeo no requiere pago" });
+    }
+
+    const existing = await Purchase.findOne({ user: req.userId, video: video._id });
+    if (existing) return res.status(400).json({ message: "Ya tienes acceso a este vídeo" });
+
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+    if (user.coins < video.price) {
+      return res.status(402).json({ message: "Monedas insuficientes" });
+    }
+
+    user.coins -= video.price;
+    await user.save();
+    try {
+      await Purchase.create({ user: req.userId, video: video._id, amount: video.price });
+    } catch (purchaseErr) {
+      user.coins += video.price;
+      await user.save();
+      throw purchaseErr;
+    }
+
+    res.json({ message: "Vídeo desbloqueado", coins: user.coins });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
