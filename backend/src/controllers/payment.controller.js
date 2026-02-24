@@ -2,10 +2,14 @@ import Stripe from "stripe";
 import Video from "../models/Video.js";
 import Purchase from "../models/Purchase.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY is not configured");
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 export const createCheckoutSession = async (req, res) => {
   try {
+    const stripe = getStripe();
     const video = await Video.findById(req.params.videoId);
     if (!video) return res.status(404).json({ message: "Vídeo no encontrado" });
     if (!video.isPrivate || video.price <= 0) {

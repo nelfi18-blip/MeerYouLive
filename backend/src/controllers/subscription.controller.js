@@ -2,10 +2,14 @@ import Stripe from "stripe";
 import Subscription from "../models/Subscription.js";
 import User from "../models/User.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY is not configured");
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 export const createSubscriptionSession = async (req, res) => {
   try {
+    const stripe = getStripe();
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
@@ -49,6 +53,7 @@ export const getSubscriptionStatus = async (req, res) => {
 
 export const cancelSubscription = async (req, res) => {
   try {
+    const stripe = getStripe();
     const sub = await Subscription.findOne({ user: req.userId });
     if (!sub?.stripeSubscriptionId) {
       return res.status(404).json({ message: "No hay suscripción activa" });
@@ -63,6 +68,7 @@ export const cancelSubscription = async (req, res) => {
 };
 
 export const handleSubscriptionWebhook = async (event) => {
+  const stripe = getStripe();
   const session = event.data.object;
   const userId = session.metadata?.userId;
   if (!userId) {
