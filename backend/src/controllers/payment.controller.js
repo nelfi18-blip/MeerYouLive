@@ -42,38 +42,15 @@ export const createCheckoutSession = async (req, res) => {
   }
 };
 
-export const handleWebhook = async (req, res) => {
-  const sig = req.headers["stripe-signature"];
-
-  let event;
-  try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch (err) {
-    return res.status(400).json({ message: `Webhook error: ${err.message}` });
+export const handlePaymentCompleted = async (session) => {
+  const { userId, videoId, amount } = session.metadata;
+  const existing = await Purchase.findOne({ stripeSessionId: session.id });
+  if (!existing) {
+    await Purchase.create({
+      user: userId,
+      video: videoId,
+      amount: parseFloat(amount),
+      stripeSessionId: session.id,
+    });
   }
-
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const { userId, videoId, amount } = session.metadata;
-
-    try {
-      const existing = await Purchase.findOne({ stripeSessionId: session.id });
-      if (!existing) {
-        await Purchase.create({
-          user: userId,
-          video: videoId,
-          amount: parseFloat(amount),
-          stripeSessionId: session.id,
-        });
-      }
-    } catch (err) {
-      return res.status(500).json({ message: err.message });
-    }
-  }
-
-  res.json({ received: true });
 };
