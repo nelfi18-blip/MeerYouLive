@@ -10,11 +10,37 @@ Live streaming platform — [meetyoulive.net](https://meetyoulive.net)
 | Backend  | Render  | https://api.meetyoulive.net  |
 | DNS      | GoDaddy | meetyoulive.net              |
 
+## Repository Structure
+
+```
+MeetYouLive/
+├── backend/
+│   ├── package.json
+│   ├── .env.example
+│   └── src/
+│       ├── app.js
+│       ├── server.js
+│       ├── config/
+│       ├── controllers/
+│       ├── middlewares/
+│       ├── models/
+│       └── routes/
+├── frontend/
+│   ├── package.json
+│   ├── next.config.ts
+│   ├── app/
+│   └── public/
+├── render.yaml
+├── README.md
+└── .gitignore
+```
+
 ## Local development
 
 ### Backend
 
 ```bash
+cd backend
 cp .env.example .env
 # fill in your values
 npm install
@@ -68,7 +94,7 @@ In [Google Cloud Console](https://console.cloud.google.com) → **OAuth Client**
 
 ## Environment variables
 
-### Backend (`.env.example`)
+### Backend (`backend/.env.example`)
 
 | Variable              | Description                          |
 |-----------------------|--------------------------------------|
