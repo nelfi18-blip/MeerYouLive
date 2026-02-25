@@ -5,7 +5,9 @@ import Stripe from "stripe";
 import { handlePaymentCompleted } from "../controllers/payment.controller.js";
 import { handleSubscriptionWebhook } from "../controllers/subscription.controller.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 const router = Router();
 
@@ -20,6 +22,7 @@ router.post(
   webhookLimiter,
   express.raw({ type: "application/json" }),
   async (req, res) => {
+    if (!stripe) return res.status(503).json({ message: "Servicio de pago no configurado" });
     const sig = req.headers["stripe-signature"];
 
     let event;

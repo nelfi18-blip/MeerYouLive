@@ -2,9 +2,12 @@ import Stripe from "stripe";
 import Video from "../models/Video.js";
 import Purchase from "../models/Purchase.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 export const createCheckoutSession = async (req, res) => {
+  if (!stripe) return res.status(503).json({ message: "Servicio de pago no configurado" });
   try {
     const video = await Video.findById(req.params.videoId);
     if (!video) return res.status(404).json({ message: "Vídeo no encontrado" });

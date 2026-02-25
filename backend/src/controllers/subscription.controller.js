@@ -2,9 +2,12 @@ import Stripe from "stripe";
 import Subscription from "../models/Subscription.js";
 import User from "../models/User.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 export const createSubscriptionSession = async (req, res) => {
+  if (!stripe) return res.status(503).json({ message: "Servicio de pago no configurado" });
   try {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
@@ -48,6 +51,7 @@ export const getSubscriptionStatus = async (req, res) => {
 };
 
 export const cancelSubscription = async (req, res) => {
+  if (!stripe) return res.status(503).json({ message: "Servicio de pago no configurado" });
   try {
     const sub = await Subscription.findOne({ user: req.userId });
     if (!sub?.stripeSubscriptionId) {
