@@ -67,6 +67,10 @@ export const cancelSubscription = async (req, res) => {
 };
 
 export const handleSubscriptionWebhook = async (event) => {
+  if (!stripe) {
+    throw new Error("Servicio de pago no configurado");
+  }
+
   const session = event.data.object;
   const userId = session.metadata?.userId;
   if (!userId) {
