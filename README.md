@@ -22,8 +22,8 @@ meetyoulive-platform/
 │   │   ├── routes/
 │   │   ├── middlewares/
 │   │   ├── services/
-│   │   └── app.js
-│   ├── server.js
+│   │   ├── app.js
+│   │   └── server.js
 │   ├── package.json
 │   └── .env.example
 ├── frontend/
