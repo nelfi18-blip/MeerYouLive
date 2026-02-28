@@ -38,6 +38,8 @@ router.post("/login", authLimiter, async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
+    if (user.isBlocked) return res.status(403).json({ message: "Cuenta bloqueada" });
+
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: "Contraseña incorrecta" });
 
