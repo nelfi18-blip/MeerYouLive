@@ -11,6 +11,7 @@ import giftRoutes from "./routes/gift.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import moderationRoutes from "./routes/moderation.routes.js";
+import videoRoutes from "./routes/video.routes.js";
 
 const app = express();
 
@@ -44,5 +45,6 @@ app.use("/api/gifts", giftRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/moderation", moderationRoutes);
+app.use("/api/videos", videoRoutes);
 
 export default app;
