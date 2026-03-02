@@ -2,10 +2,16 @@ import Stripe from "stripe";
 import Video from "../models/Video.js";
 import Purchase from "../models/Purchase.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const getStripe = () => {
+  if (!getStripe._instance) {
+    getStripe._instance = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+  return getStripe._instance;
+};
 
 export const createCheckoutSession = async (req, res) => {
   try {
+    const stripe = getStripe();
     const video = await Video.findById(req.params.videoId);
     if (!video) return res.status(404).json({ message: "Vídeo no encontrado" });
     if (!video.isPrivate || video.price <= 0) {
