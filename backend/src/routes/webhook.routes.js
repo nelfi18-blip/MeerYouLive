@@ -5,7 +5,12 @@ import Stripe from "stripe";
 import { handlePaymentCompleted } from "../controllers/payment.controller.js";
 import { handleSubscriptionWebhook } from "../controllers/subscription.controller.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const getStripe = () => {
+  if (!getStripe._instance) {
+    getStripe._instance = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+  return getStripe._instance;
+};
 
 const router = Router();
 
@@ -20,6 +25,7 @@ router.post(
   webhookLimiter,
   express.raw({ type: "application/json" }),
   async (req, res) => {
+    const stripe = getStripe();
     const sig = req.headers["stripe-signature"];
 
     let event;
