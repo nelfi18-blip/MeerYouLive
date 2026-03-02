@@ -1,7 +1,8 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams } from "react-router-dom";
+
+const API_URL = import.meta.env.VITE_API_URL;
+const LIVE_PROVIDER_KEY = import.meta.env.VITE_LIVE_PROVIDER_KEY;
 
 export default function LiveViewerPage() {
   const { id } = useParams();
@@ -9,7 +10,7 @@ export default function LiveViewerPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/live`)
+    fetch(`${API_URL}/api/lives`)
       .then((res) => {
         if (!res.ok) throw new Error("Error al cargar el directo");
         return res.json();
@@ -28,7 +29,7 @@ export default function LiveViewerPage() {
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!live) return <p>Cargando directo…</p>;
 
-  const playerUrl = `https://wl.cinectar.com/player/${process.env.NEXT_PUBLIC_LIVE_PROVIDER_KEY}/${live.streamKey}`;
+  const playerUrl = `https://wl.cinectar.com/player/${LIVE_PROVIDER_KEY}/${live.streamKey}`;
 
   return (
     <div>

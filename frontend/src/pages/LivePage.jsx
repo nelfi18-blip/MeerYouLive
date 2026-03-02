@@ -1,15 +1,15 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function LivePage() {
   const [lives, setLives] = useState([]);
   const [error, setError] = useState("");
-  const router = useRouter();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/live`)
+    fetch(`${API_URL}/api/lives`)
       .then((res) => {
         if (!res.ok) throw new Error("Error al cargar directos");
         return res.json();
@@ -29,7 +29,7 @@ export default function LivePage() {
         <ul>
           {lives.map((live) => (
             <li key={live._id}>
-              <button onClick={() => router.push(`/live/${live._id}`)}>
+              <button onClick={() => navigate(`/live/${live._id}`)}>
                 {live.title} — {live.user?.username}
               </button>
             </li>
