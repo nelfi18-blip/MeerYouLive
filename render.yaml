@@ -42,3 +42,5 @@ services:
         value: https://api.meetyoulive.net
       - key: NEXT_PUBLIC_GOOGLE_URL
         value: https://api.meetyoulive.net/api/auth/google
+      - key: NEXT_PUBLIC_LIVE_PROVIDER_KEY
+        sync: false
