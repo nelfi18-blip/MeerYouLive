@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeerYouLive</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="login">
+    <h1>MeerYouLive</h1>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Contraseña" />
+    <button onclick="login()">Entrar</button>
+  </div>
+
+  <div id="app" style="display:none">
+    <h2>¡Bienvenido a MeerYouLive!</h2>
+    <button onclick="logout()">Cerrar sesión</button>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
