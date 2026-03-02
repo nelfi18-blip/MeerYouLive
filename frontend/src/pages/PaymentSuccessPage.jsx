@@ -1,4 +1,4 @@
-export default function PaymentSuccess() {
+export default function PaymentSuccessPage() {
   return (
     <div style={{ textAlign: "center", marginTop: "4rem" }}>
       <h1>✅ Pago completado</h1>

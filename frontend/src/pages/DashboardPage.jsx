@@ -1,8 +1,8 @@
-"use client";
-
 import { useEffect, useState } from "react";
 
-export default function Dashboard() {
+const API_URL = import.meta.env.VITE_API_URL;
+
+export default function DashboardPage() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
 
@@ -14,10 +14,10 @@ export default function Dashboard() {
       return;
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/me`, {
+    fetch(`${API_URL}/api/user/me`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => {
         if (!res.ok) {

@@ -19,11 +19,17 @@ const allowedOrigins = process.env.FRONTEND_URL
       process.env.FRONTEND_URL,
       process.env.FRONTEND_URL.replace("://", "://www."),
     ]
-  : [];
+  : null;
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: allowedOrigins
+      ? (origin, cb) => {
+          if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+          if (/\.vercel\.app$/.test(origin)) return cb(null, true);
+          cb(new Error("Not allowed by CORS"));
+        }
+      : /\.vercel\.app$/,
     credentials: true,
   })
 );

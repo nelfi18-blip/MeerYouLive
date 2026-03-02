@@ -1,4 +1,4 @@
-export default function PaymentCancel() {
+export default function PaymentCancelPage() {
   return (
     <div style={{ textAlign: "center", marginTop: "4rem" }}>
       <h1>❌ Pago cancelado</h1>
