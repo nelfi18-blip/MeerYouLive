@@ -1,8 +1,6 @@
-"use client";
-
 import { useEffect } from "react";
 
-export default function SuccessPage() {
+export default function AuthSuccessPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");

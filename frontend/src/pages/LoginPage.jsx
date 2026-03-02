@@ -1,6 +1,7 @@
-"use client";
-
 import { useState } from "react";
+
+const API_URL = import.meta.env.VITE_API_URL;
+const GOOGLE_URL = API_URL ? `${API_URL}/api/auth/google` : "";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,15 +11,12 @@ export default function LoginPage() {
   const login = async () => {
     setError("");
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-          credentials: "include"
-        }
-      );
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
 
       const data = await res.json();
 
@@ -53,7 +51,7 @@ export default function LoginPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button onClick={login}>Entrar</button>
-      <a href={process.env.NEXT_PUBLIC_GOOGLE_URL}>Entrar con Google</a>
+      {GOOGLE_URL && <a href={GOOGLE_URL}>Entrar con Google</a>}
     </div>
   );
 }

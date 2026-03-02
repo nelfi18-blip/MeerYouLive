@@ -32,15 +32,13 @@ services:
 
   - type: web
     name: meetyoulive-frontend
-    runtime: node
+    runtime: static
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    staticPublishPath: dist
     envVars:
-      - key: NEXT_PUBLIC_API_URL
+      - key: VITE_API_URL
         value: https://api.meetyoulive.net
-      - key: NEXT_PUBLIC_GOOGLE_URL
-        value: https://api.meetyoulive.net/api/auth/google
-      - key: NEXT_PUBLIC_LIVE_PROVIDER_KEY
+      - key: VITE_LIVE_PROVIDER_KEY
         sync: false
