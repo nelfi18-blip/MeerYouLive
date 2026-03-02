@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -40,6 +41,7 @@ export default function Dashboard() {
     <div>
       <h1>Bienvenido, {user.username}</h1>
       <p>Email: {user.email}</p>
+      <Link href="/live">Ver directos en vivo</Link>
     </div>
   );
 }
