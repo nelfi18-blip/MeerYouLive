@@ -53,7 +53,7 @@ export default function LoginPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button onClick={login}>Entrar</button>
-      <button onClick={() => signIn("google")}>Entrar con Google</button>
+      <button onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>Entrar con Google</button>
     </div>
   );
 }
