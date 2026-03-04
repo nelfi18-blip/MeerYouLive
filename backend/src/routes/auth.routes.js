@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
 const User = require("../models/User.js");
@@ -40,6 +41,34 @@ router.post("/login", authLimiter, async (req, res) => {
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: "Contraseña incorrecta" });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post("/google-session", async (req, res) => {
+  const secret = req.headers["x-nextauth-secret"];
+  if (!process.env.NEXTAUTH_SECRET || secret !== process.env.NEXTAUTH_SECRET) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const { email, name } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: "email es requerido" });
+  }
+
+  try {
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name: name || email.split("@")[0],
+        email,
+        password: crypto.randomBytes(32).toString("hex"),
+      });
+    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ token });

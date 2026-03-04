@@ -1,14 +1,25 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+"use client";
 
-const API_URL = import.meta.env.VITE_API_URL;
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const [user, setUser] = useState(null);
   const [coins, setCoins] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (status === "loading") return;
+
+    // If NextAuth has a backend token (Google login), persist it to localStorage
+    if (session?.backendToken) {
+      localStorage.setItem("token", session.backendToken);
+    }
+
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -34,7 +45,7 @@ export default function DashboardPage() {
       .then((res) => res.ok ? res.json() : null)
       .then((data) => { if (data) setCoins(data); })
       .catch(() => {});
-  }, []);
+  }, [session, status]);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -55,8 +66,8 @@ export default function DashboardPage() {
         </p>
       )}
       <nav style={{ marginTop: "1rem", display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-        <Link to="/live">🎥 Directos</Link>
-        <Link to="/coins">💰 Comprar monedas</Link>
+        <Link href="/live">🎥 Directos</Link>
+        <Link href="/coins">💰 Comprar monedas</Link>
       </nav>
       <button onClick={logout} style={{ marginTop: "1.5rem" }}>Cerrar sesión</button>
     </div>
