@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -70,9 +71,8 @@ export default function RegisterPage() {
 
       <div className="register-card">
         {/* Logo */}
-        <div className="register-logo">
-          <div className="register-logo-icon">▶</div>
-          <span className="register-logo-text">MeetYouLive</span>
+        <div style={{ marginBottom: "2rem" }}>
+          <Logo size="large" centered />
         </div>
 
         <h1 className="register-title">Crear cuenta</h1>
@@ -206,33 +206,6 @@ export default function RegisterPage() {
           box-shadow: var(--shadow);
           position: relative;
           z-index: 1;
-        }
-
-        .register-logo {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          margin-bottom: 2rem;
-          justify-content: center;
-        }
-
-        .register-logo-icon {
-          width: 40px;
-          height: 40px;
-          background: var(--accent);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.1rem;
-          color: #fff;
-        }
-
-        .register-logo-text {
-          font-size: 1.3rem;
-          font-weight: 800;
-          color: var(--text);
-          letter-spacing: -0.03em;
         }
 
         .register-title {
