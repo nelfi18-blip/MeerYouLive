@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -53,9 +54,8 @@ export default function LoginPage() {
 
       <div className="login-card">
         {/* Logo */}
-        <div className="login-logo">
-          <div className="login-logo-icon">▶</div>
-          <span className="login-logo-text">MeetYouLive</span>
+        <div style={{ marginBottom: "2rem" }}>
+          <Logo size="large" centered />
         </div>
 
         <h1 className="login-title">Bienvenido de nuevo</h1>
@@ -164,33 +164,6 @@ export default function LoginPage() {
           box-shadow: var(--shadow);
           position: relative;
           z-index: 1;
-        }
-
-        .login-logo {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          margin-bottom: 2rem;
-          justify-content: center;
-        }
-
-        .login-logo-icon {
-          width: 40px;
-          height: 40px;
-          background: var(--accent);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.1rem;
-          color: #fff;
-        }
-
-        .login-logo-text {
-          font-size: 1.3rem;
-          font-weight: 800;
-          color: var(--text);
-          letter-spacing: -0.03em;
         }
 
         .login-title {
