@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import BottomNav from "@/components/BottomNav";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -162,6 +163,8 @@ export default function DashboardPage() {
           </div>
         )}
       </section>
+
+      <BottomNav active="dashboard" />
 
       <style jsx>{`
         .dashboard { display: flex; flex-direction: column; gap: 2rem; }
