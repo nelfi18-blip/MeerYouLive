@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -87,7 +88,7 @@ export default function ProfilePage() {
       <div className="profile-hero card">
         <div className="profile-avatar-wrap">
           {session?.user?.image ? (
-            <img
+            <Image
               src={session.user.image}
               alt={displayName}
               width={96}

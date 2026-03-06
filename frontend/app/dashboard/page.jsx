@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -87,7 +88,7 @@ export default function DashboardPage() {
         <div className="welcome-inner">
           <div className="avatar-placeholder" style={{ width: 64, height: 64, fontSize: "1.5rem" }}>
             {session?.user?.image
-              ? <img src={session.user.image} alt={displayName} width={64} height={64} style={{ borderRadius: "50%", objectFit: "cover" }} />
+              ? <Image src={session.user.image} alt={displayName} width={64} height={64} style={{ borderRadius: "50%", objectFit: "cover" }} />
               : initial}
           </div>
           <div className="welcome-text">
