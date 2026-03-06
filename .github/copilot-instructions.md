@@ -2,56 +2,55 @@
 
 ## Project overview
 
-MeetYouLive is a live-streaming platform with a Node.js/Express backend and a Vite + React frontend. Both are deployed on Vercel (frontend as a static SPA, backend as a Node.js serverless function).
+MeetYouLive is a live-streaming platform with a Node.js/Express backend and a Next.js 15 frontend. The backend is deployed on Render, and the frontend is deployed on Vercel.
 
 ## Repository structure
 
 ```
 MeetYouLive/
-├── backend/           Node.js + Express API (ES Modules)
-│   ├── src/
-│   │   ├── app.js         Express app setup (CORS, routes)
-│   │   ├── server.js      Entry point (connects to MongoDB, starts server)
-│   │   ├── config/        db.js, passport.js
-│   │   ├── controllers/   Route handler logic
-│   │   ├── middlewares/   auth.middleware.js (JWT verification)
-│   │   ├── models/        Mongoose models
-│   │   ├── routes/        Express routers
-│   │   └── services/      Business logic helpers
-│   └── vercel.json        Vercel serverless config
-└── frontend/          Vite + React SPA (JSX, no TypeScript)
-    ├── src/
-    │   ├── main.jsx       React entry point
-    │   ├── App.jsx        React Router route definitions
-    │   ├── pages/         One file per page/route
-    │   └── lib/           Shared helpers (e.g. payVideo.js)
-    ├── index.html
-    ├── vite.config.js
-    └── vercel.json        SPA rewrite rule (all paths → index.html)
+├── backend/           Node.js + Express API (CommonJS)
+│   ├── index.js           Entry point (loads dotenv, connects to MongoDB, starts server)
+│   └── src/
+│       ├── app.js         Express app setup (CORS, routes, middleware)
+│       ├── config/        db.js, passport.js
+│       ├── controllers/   Route handler logic
+│       ├── middlewares/   auth.middleware.js (JWT verification)
+│       ├── models/        Mongoose models
+│       ├── routes/        Express routers
+│       └── services/      Business logic helpers
+└── frontend/          Next.js 15 App Router (JSX, no TypeScript)
+    ├── app/               Next.js App Router pages and layouts
+    │   ├── layout.jsx     Root layout
+    │   ├── page.jsx       Home page
+    │   ├── api/           Next.js API routes (e.g. next-auth)
+    │   └── <route>/       One folder per route (dashboard, live, profile, etc.)
+    ├── components/        Shared React components
+    ├── lib/               Shared helpers (e.g. payVideo.js)
+    └── vercel.json        Vercel deployment config
 ```
 
 ## Tech stack
 
-| Layer     | Technology                              |
-|-----------|-----------------------------------------|
+| Layer     | Technology                                                        |
+|-----------|-------------------------------------------------------------------|
 | Backend   | Node.js 18, Express, Mongoose, JWT, Passport (Google OAuth), Stripe |
-| Frontend  | React 18, Vite, React Router v6         |
-| Database  | MongoDB Atlas                           |
-| Deploy    | Vercel (both backend and frontend)      |
+| Frontend  | Next.js 15 (App Router), React 18, next-auth                     |
+| Database  | MongoDB Atlas                                                     |
+| Deploy    | Render (backend), Vercel (frontend)                              |
 
 ## Key conventions
 
-- **Backend uses ES Modules** (`"type": "module"` in `package.json`). Always use `import`/`export`, never `require`.
-- **Frontend env vars** are prefixed with `VITE_` and accessed via `import.meta.env.VITE_*`. Never use `process.env` in frontend code.
-- **Backend env vars** are accessed via `process.env.*` after `dotenv.config()` in `server.js`.
-- **Authentication** uses JWT tokens stored in `localStorage`. The token is sent as `Authorization: Bearer <token>` header. The `verifyToken` middleware in `middlewares/auth.middleware.js` validates it.
-- **React Router** is used for all client-side navigation. Pages are in `frontend/src/pages/`. Add new routes in `frontend/src/App.jsx`.
-- **CORS** — the backend allows origins listed in `FRONTEND_URL` env var and any `*.vercel.app` domain. When deploying to a custom domain, set `FRONTEND_URL` in the backend environment.
+- **Backend uses CommonJS** (`require`/`module.exports`). Never use `import`/`export` in backend files.
+- **Frontend env vars** are prefixed with `NEXT_PUBLIC_` and accessed via `process.env.NEXT_PUBLIC_*`. `import.meta.env` is not used in Next.js. Server-side-only env vars (e.g. `NEXTAUTH_SECRET`) have no prefix.
+- **Backend env vars** are accessed via `process.env.*` after `dotenv.config()` in `index.js`.
+- **Authentication** on the frontend uses `next-auth` (v4) with `SessionProvider`. The backend uses JWT tokens validated by the `verifyToken` middleware in `middlewares/auth.middleware.js`.
+- **Routing** uses Next.js file-system routing (App Router). Add new pages by creating a folder with a `page.jsx` inside `frontend/app/`.
+- **CORS** — the backend allows origins listed in the `FRONTEND_URL` env var and any `*.vercel.app` domain. When deploying to a custom domain, set `FRONTEND_URL` in the backend environment.
 
 ## Adding a new feature (common pattern)
 
-1. **Backend**: add a Mongoose model in `models/`, a route file in `routes/`, a controller in `controllers/`, then register the route in `app.js`.
-2. **Frontend**: add a page component in `src/pages/`, then add a `<Route>` entry in `src/App.jsx`.
+1. **Backend**: add a Mongoose model in `src/models/`, a route file in `src/routes/`, a controller in `src/controllers/`, then register the route in `src/app.js`.
+2. **Frontend**: add a new folder under `frontend/app/` with a `page.jsx` file. Next.js picks it up automatically via file-system routing.
 
 ## Environment variables
 
@@ -68,9 +67,14 @@ MeetYouLive/
 | `STRIPE_SECRET_KEY`            | Stripe secret key                            |
 | `STRIPE_WEBHOOK_SECRET`        | Stripe webhook signing secret                |
 | `STRIPE_SUBSCRIPTION_PRICE_ID` | Stripe Price ID for the subscription plan    |
+| `NEXTAUTH_SECRET`              | Must match the frontend `NEXTAUTH_SECRET` (used to verify next-auth session tokens) |
 
 ### Frontend
-| Variable               | Description                            |
-|------------------------|----------------------------------------|
-| `VITE_API_URL`         | Backend API base URL                   |
-| `VITE_LIVE_PROVIDER_KEY` | Live streaming provider API key      |
+| Variable                  | Description                            |
+|---------------------------|----------------------------------------|
+| `NEXT_PUBLIC_API_URL`     | Backend API base URL                   |
+| `NEXT_PUBLIC_LIVE_PROVIDER_KEY` | Live streaming provider API key  |
+| `GOOGLE_CLIENT_ID`        | Google OAuth client ID (for next-auth) |
+| `GOOGLE_CLIENT_SECRET`    | Google OAuth client secret             |
+| `NEXTAUTH_SECRET`         | Secret for next-auth session signing   |
+| `NEXTAUTH_URL`            | Canonical URL of the frontend          |
