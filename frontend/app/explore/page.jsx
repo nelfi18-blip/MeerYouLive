@@ -1,265 +1,339 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
+import Image from "next/image";
+import BottomNav from "@/components/BottomNav";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// TODO: replace with real API data — all profiles share the same placeholder image for now
+const DEMO_PROFILES = [
+  {
+    id: 1,
+    name: "Ana",
+    age: 24,
+    location: "Madrid",
+    image: "/demo-profile.jpg",
+    bio: "Me encanta el yoga y viajar ✈️",
+  },
+  {
+    id: 2,
+    name: "Laura",
+    age: 27,
+    location: "Barcelona",
+    image: "/demo-profile.jpg",
+    bio: "Amante del café ☕ y la música en vivo 🎶",
+  },
+  {
+    id: 3,
+    name: "Carlos",
+    age: 29,
+    location: "Valencia",
+    image: "/demo-profile.jpg",
+    bio: "Fotógrafo y aventurero 📸",
+  },
+];
 
-const CATEGORIES = ["Todos", "Gaming", "Música", "Charla", "Arte", "Educación", "Otro"];
+const SWIPE_ANIMATION_MS = 350;
 
 export default function ExplorePage() {
-  const [lives, setLives] = useState([]);
-  const [filtered, setFiltered] = useState([]);
-  const [category, setCategory] = useState("Todos");
-  const [search, setSearch] = useState("");
-  const [error, setError] = useState("");
+  const [profiles, setProfiles] = useState(DEMO_PROFILES);
+  const [current, setCurrent] = useState(0);
+  const [swipeAction, setSwipeAction] = useState(null);
+  const [imgError, setImgError] = useState(false);
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/lives`)
-      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
-      .then((d) => { setLives(Array.isArray(d) ? d : []); })
-      .catch(() => setError("No se pudo cargar los directos"));
-  }, []);
+  const profile = profiles[current];
 
-  useEffect(() => {
-    let result = lives;
-    if (category !== "Todos") {
-      result = result.filter((l) =>
-        (l.category || "").toLowerCase() === category.toLowerCase()
-      );
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (l) =>
-          l.title?.toLowerCase().includes(q) ||
-          l.user?.username?.toLowerCase().includes(q)
-      );
-    }
-    setFiltered(result);
-  }, [lives, category, search]);
+  function handleSwipe(type) {
+    setSwipeAction(type);
+    setImgError(false);
+    setTimeout(() => {
+      setSwipeAction(null);
+      setCurrent((prev) => prev + 1);
+    }, SWIPE_ANIMATION_MS);
+  }
+
+  if (!profile) {
+    return (
+      <div className="explore-wrap">
+        <div className="no-more-card card-glass">
+          <span className="no-more-icon">🎉</span>
+          <h2>¡Has visto todos los perfiles!</h2>
+          <p>Vuelve más tarde para descubrir más personas.</p>
+          <button className="refresh-btn" onClick={() => { setCurrent(0); setImgError(false); }}>
+            Volver a empezar
+          </button>
+        </div>
+        <BottomNav active="explore" />
+        <style jsx>{styles}</style>
+      </div>
+    );
+  }
 
   return (
-    <div className="explore">
-      {/* Page header */}
-      <div className="explore-header">
-        <div>
-          <h1 className="explore-title">Explorar</h1>
-          <p className="explore-sub">Descubre streamers en vivo ahora mismo</p>
+    <div className="explore-wrap">
+      <h1 className="explore-title">Explorar</h1>
+
+      <div className={`tinder-card card-glass${swipeAction ? ` swipe-${swipeAction}` : ""}`}>
+        {/* Profile image */}
+        <div className="card-image-wrap">
+          {!imgError ? (
+            <Image
+              src={profile.image}
+              alt={profile.name}
+              fill
+              style={{ objectFit: "cover" }}
+              priority
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="img-fallback" />
+          )}
+          <div className="card-gradient-overlay" />
         </div>
-        <div className="explore-search-wrap">
-          <span className="search-icon">🔍</span>
-          <input
-            className="input explore-search"
-            type="text"
-            placeholder="Buscar por título o streamer…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+
+        {/* Profile info overlay */}
+        <div className="card-info">
+          <div className="profile-name-row">
+            <span className="profile-name">{profile.name}</span>
+            <span className="profile-age">{profile.age}</span>
+          </div>
+          <div className="profile-location">📍 {profile.location}</div>
+          {profile.bio && <p className="profile-bio">{profile.bio}</p>}
         </div>
       </div>
 
-      {/* Category pills */}
-      <div className="category-bar">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            className={`cat-pill${category === cat ? " active" : ""}`}
-            onClick={() => setCategory(cat)}
-          >
-            {cat}
-          </button>
-        ))}
+      {/* Action buttons */}
+      <div className="action-row">
+        <button
+          className="swipe-btn btn-nope"
+          aria-label="No me gusta"
+          onClick={() => handleSwipe("left")}
+        >
+          ❌
+        </button>
+        <button
+          className="swipe-btn btn-superlike"
+          aria-label="Super like"
+          onClick={() => handleSwipe("super")}
+        >
+          ⭐
+        </button>
+        <button
+          className="swipe-btn btn-like"
+          aria-label="Me gusta"
+          onClick={() => handleSwipe("right")}
+        >
+          ❤️
+        </button>
       </div>
 
-      {/* Content */}
-      {error && <div className="error-banner">{error}</div>}
+      {/* Profile counter */}
+      <div className="profile-counter">
+        {current + 1} / {profiles.length}
+      </div>
 
-      {filtered.length === 0 ? (
-        <div className="empty-state card">
-          <span style={{ fontSize: "3rem" }}>📡</span>
-          <h3 style={{ color: "var(--text)" }}>Sin resultados</h3>
-          <p>
-            {search || category !== "Todos"
-              ? "No hay directos que coincidan con tu búsqueda."
-              : "No hay directos activos en este momento. ¡Vuelve más tarde!"}
-          </p>
-        </div>
-      ) : (
-        <div className="streams-grid">
-          {filtered.map((live) => (
-            <Link key={live._id} href={`/live/${live._id}`} className="stream-card card">
-              <div className="stream-thumb">
-                <span className="badge badge-live">LIVE</span>
-                {live.viewers && (
-                  <span className="viewer-count">👁 {live.viewers}</span>
-                )}
-                <span className="stream-thumb-icon">📺</span>
-              </div>
-              <div className="stream-body">
-                <div className="stream-user-row">
-                  <div className="avatar-placeholder" style={{ width: 32, height: 32, fontSize: "0.85rem" }}>
-                    {(live.user?.username || "?")[0].toUpperCase()}
-                  </div>
-                  <span className="stream-username">@{live.user?.username || "anónimo"}</span>
-                </div>
-                <div className="stream-title">{live.title}</div>
-                {live.category && (
-                  <span className="stream-category">{live.category}</span>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+      <BottomNav active="explore" />
 
-      <style jsx>{`
-        .explore { display: flex; flex-direction: column; gap: 1.5rem; }
-
-        .explore-header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 1rem;
-          flex-wrap: wrap;
-        }
-
-        .explore-title {
-          font-size: 1.75rem;
-          font-weight: 800;
-          color: var(--text);
-        }
-
-        .explore-sub { color: var(--text-muted); margin-top: 0.25rem; }
-
-        .explore-search-wrap {
-          position: relative;
-          width: 280px;
-        }
-
-        .search-icon {
-          position: absolute;
-          left: 0.75rem;
-          top: 50%;
-          transform: translateY(-50%);
-          pointer-events: none;
-          font-size: 0.95rem;
-        }
-
-        .explore-search { padding-left: 2.4rem !important; }
-
-        /* Categories */
-        .category-bar {
-          display: flex;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-        }
-
-        .cat-pill {
-          padding: 0.4rem 1rem;
-          border-radius: 20px;
-          border: 1px solid var(--border);
-          background: var(--card);
-          color: var(--text-muted);
-          font-size: 0.85rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all var(--transition);
-        }
-
-        .cat-pill:hover { border-color: var(--accent); color: var(--accent); }
-        .cat-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-
-        /* Stream grid */
-        .streams-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-          gap: 1rem;
-        }
-
-        .stream-card { padding: 0; overflow: hidden; cursor: pointer; }
-
-        .stream-thumb {
-          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-          height: 140px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-        }
-
-        .stream-thumb .badge { position: absolute; top: 0.5rem; left: 0.5rem; }
-
-        .viewer-count {
-          position: absolute;
-          bottom: 0.5rem;
-          right: 0.5rem;
-          background: rgba(0,0,0,0.6);
-          color: #fff;
-          font-size: 0.75rem;
-          padding: 0.2rem 0.5rem;
-          border-radius: 4px;
-        }
-
-        .stream-thumb-icon { font-size: 2.5rem; opacity: 0.4; }
-
-        .stream-body { padding: 0.875rem; }
-
-        .stream-user-row {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 0.5rem;
-        }
-
-        .stream-username { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
-
-        .stream-title {
-          font-weight: 600;
-          color: var(--text);
-          font-size: 0.9rem;
-          line-height: 1.3;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .stream-category {
-          display: inline-block;
-          margin-top: 0.5rem;
-          background: var(--accent-dim);
-          color: var(--accent);
-          font-size: 0.75rem;
-          padding: 0.2rem 0.5rem;
-          border-radius: 4px;
-          font-weight: 500;
-        }
-
-        /* Errors / empty */
-        .error-banner {
-          background: rgba(244,67,54,0.1);
-          border: 1px solid var(--error);
-          color: var(--error);
-          border-radius: var(--radius-sm);
-          padding: 0.75rem 1rem;
-          font-size: 0.875rem;
-        }
-
-        .empty-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 3rem;
-          text-align: center;
-        }
-
-        @media (max-width: 640px) {
-          .explore-search-wrap { width: 100%; }
-          .explore-header { flex-direction: column; }
-        }
-      `}</style>
+      <style jsx>{styles}</style>
     </div>
   );
 }
+
+const styles = `
+  .explore-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem 5rem;
+    gap: 1.25rem;
+  }
+
+  .explore-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #fff;
+    align-self: flex-start;
+  }
+
+  /* Tinder card */
+  .tinder-card {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    height: 520px;
+    border-radius: 28px;
+    overflow: hidden;
+    transition: transform 0.35s ease, opacity 0.35s ease;
+  }
+
+  .swipe-left  { transform: translateX(-120%) rotate(-20deg); opacity: 0; }
+  .swipe-right { transform: translateX(120%)  rotate(20deg);  opacity: 0; }
+  .swipe-super { transform: translateY(-120%) scale(0.9);     opacity: 0; }
+
+  .card-image-wrap {
+    position: absolute;
+    inset: 0;
+  }
+
+  .img-fallback {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #ff006a 0%, #6a00ff 100%);
+  }
+
+  .card-gradient-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 40%,
+      rgba(0, 0, 0, 0.75) 100%
+    );
+  }
+
+  .card-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem;
+    z-index: 2;
+  }
+
+  .profile-name-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .profile-name {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .profile-age {
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .profile-location {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.8);
+    margin-top: 0.25rem;
+  }
+
+  .profile-bio {
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.7);
+    margin-top: 0.5rem;
+    line-height: 1.4;
+  }
+
+  /* Action buttons */
+  .action-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .swipe-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .swipe-btn:active { transform: scale(0.9); }
+
+  .btn-nope {
+    background: rgba(255, 59, 48, 0.15);
+    box-shadow: 0 4px 20px rgba(255, 59, 48, 0.3);
+  }
+
+  .btn-nope:hover {
+    background: rgba(255, 59, 48, 0.3);
+    box-shadow: 0 6px 24px rgba(255, 59, 48, 0.5);
+  }
+
+  .btn-superlike {
+    width: 52px;
+    height: 52px;
+    font-size: 1.4rem;
+    background: rgba(255, 214, 0, 0.15);
+    box-shadow: 0 4px 20px rgba(255, 214, 0, 0.25);
+  }
+
+  .btn-superlike:hover {
+    background: rgba(255, 214, 0, 0.3);
+    box-shadow: 0 6px 24px rgba(255, 214, 0, 0.45);
+  }
+
+  .btn-like {
+    background: rgba(255, 45, 138, 0.15);
+    box-shadow: 0 4px 20px rgba(255, 45, 138, 0.3);
+  }
+
+  .btn-like:hover {
+    background: rgba(255, 45, 138, 0.3);
+    box-shadow: 0 6px 24px rgba(255, 45, 138, 0.5);
+  }
+
+  /* Counter */
+  .profile-counter {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.05em;
+  }
+
+  /* No more cards */
+  .no-more-card {
+    margin-top: 4rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .no-more-icon { font-size: 3rem; }
+
+  .no-more-card h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .no-more-card p {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.9rem;
+  }
+
+  .refresh-btn {
+    margin-top: 0.75rem;
+    padding: 0.65rem 1.75rem;
+    border-radius: 16px;
+    border: none;
+    background: linear-gradient(135deg, #ff2d8a, #ff006a);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255,0,120,0.35);
+    transition: opacity 0.15s ease;
+  }
+
+  .refresh-btn:hover { opacity: 0.85; }
+`;
