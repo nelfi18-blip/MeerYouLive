@@ -8,33 +8,41 @@ const handler = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
   ],
+
   secret: process.env.NEXTAUTH_SECRET,
+
+  session: {
+    strategy: "jwt",
+  },
+
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+
   callbacks: {
     async jwt({ token, account, profile }) {
-      if (account?.provider === "google" && profile?.email) {
-        try {
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google-session`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-nextauth-secret": process.env.NEXTAUTH_SECRET,
-              },
-              body: JSON.stringify({ email: profile.email, name: profile.name }),
-            }
-          );
-          if (res.ok) {
-            const data = await res.json();
-            token.backendToken = data.token;
-          }
-        } catch (err) {
-          console.error("[NextAuth] Failed to get backend token:", err);
-        }      }
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+
+      if (profile) {
+        token.name = profile.name;
+        token.email = profile.email;
+        token.picture = profile.picture;
+      }
+
       return token;
     },
+
     async session({ session, token }) {
-      session.backendToken = token.backendToken;
+      if (token) {
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.image = token.picture;
+        session.accessToken = token.accessToken;
+      }
+
       return session;
     },
   },
