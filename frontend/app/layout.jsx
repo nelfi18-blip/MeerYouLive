@@ -1,15 +1,18 @@
 import "./globals.css";
+import Providers from "./providers";
 
 export const metadata = {
   title: "MeetYouLive",
-  description: "Dating, Live streaming y VR",
+  description: "Meet people live",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
