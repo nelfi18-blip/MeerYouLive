@@ -1,5 +1,6 @@
 import "./globals.css";
 import Providers from "./providers";
+import NavbarWrapper from "@/components/NavbarWrapper";
 
 export const metadata = {
   title: "MeetYouLive",
@@ -11,6 +12,7 @@ export default function RootLayout({ children }) {
     <html lang="es">
       <body>
         <Providers>
+          <NavbarWrapper />
           {children}
         </Providers>
       </body>
