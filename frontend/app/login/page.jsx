@@ -2,18 +2,21 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Logo from "../../components/Logo";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const login = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError("");
     setLoading(true);
     try {
@@ -33,17 +36,13 @@ export default function LoginPage() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
       }
     } catch {
       setError("No se pudo conectar con el servidor");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") login();
   };
 
   return (
@@ -71,7 +70,7 @@ export default function LoginPage() {
 
         {error && <div className="login-error">{error}</div>}
 
-        <div className="login-form">
+        <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">Email</label>
             <input
@@ -80,7 +79,6 @@ export default function LoginPage() {
               placeholder="tu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={handleKeyDown}
             />
           </div>
 
@@ -92,18 +90,17 @@ export default function LoginPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={handleKeyDown}
             />
           </div>
 
           <button
+            type="submit"
             className="btn btn-primary btn-lg btn-block login-submit-btn"
-            onClick={login}
             disabled={loading}
           >
             {loading ? "Iniciando sesión…" : "Iniciar sesión"}
           </button>
-        </div>
+        </form>
 
         <div className="divider-text">o continúa con</div>
 
