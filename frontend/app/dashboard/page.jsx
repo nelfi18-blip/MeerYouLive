@@ -8,9 +8,9 @@ import Image from "next/image";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const QUICK_ACTIONS = [
-  { href: "/live", icon: "🎥", label: "Directos", desc: "Ver streams en vivo" },
-  { href: "/explore", icon: "🔍", label: "Explorar", desc: "Descubrir creadores" },
-  { href: "/coins", icon: "💰", label: "Monedas", desc: "Comprar y regalar" },
+  { href: "/live", icon: "🔴", label: "Directos", desc: "Ver streams en vivo" },
+  { href: "/explore", icon: "✨", label: "Explorar", desc: "Descubrir creadores" },
+  { href: "/coins", icon: "🪙", label: "Monedas", desc: "Comprar y regalar" },
   { href: "/profile", icon: "👤", label: "Mi perfil", desc: "Editar tu cuenta" },
 ];
 
@@ -24,6 +24,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status === "loading") return;
 
+    if (status === "unauthenticated") {
+      window.location.href = "/login";
+      return;
+    }
+
     if (session?.backendToken) {
       localStorage.setItem("token", session.backendToken);
     }
@@ -31,7 +36,7 @@ export default function DashboardPage() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      window.location.href = "/login";
+      setError("Tu sesión de Google está activa, pero el backend aún no entregó el token interno.");
       return;
     }
 
@@ -40,14 +45,12 @@ export default function DashboardPage() {
     fetch(`${API_URL}/api/user/me`, { headers })
       .then((res) => {
         if (!res.ok) {
-          localStorage.removeItem("token");
-          window.location.href = "/login";
-          return null;
+          throw new Error("No se pudo cargar el perfil");
         }
         return res.json();
       })
-      .then((data) => { if (data) setUser(data); })
-      .catch(() => setError("No se pudo cargar el perfil"));
+      .then((data) => setUser(data))
+      .catch((err) => setError(err.message));
 
     fetch(`${API_URL}/api/user/coins`, { headers })
       .then((res) => res.ok ? res.json() : null)
@@ -60,7 +63,16 @@ export default function DashboardPage() {
       .catch(() => {});
   }, [session, status]);
 
-  if (error) {
+  if (status === "loading") {
+    return (
+      <div className="loading-state">
+        <div className="spinner" />
+        <p>Cargando…</p>
+      </div>
+    );
+  }
+
+  if (error && !user) {
     return (
       <div className="error-state">
         <p>⚠️ {error}</p>
