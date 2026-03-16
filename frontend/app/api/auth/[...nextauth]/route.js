@@ -44,7 +44,7 @@ const handler = NextAuth({
           });
 
           if (!res.ok) {
-            throw new Error("Backend session failed");
+            throw new Error(`Backend session failed with status ${res.status}`);
           }
 
           const data = await res.json();
