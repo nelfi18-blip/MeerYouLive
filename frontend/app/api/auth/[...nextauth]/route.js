@@ -35,6 +35,7 @@ const handler = NextAuth({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "x-nextauth-secret": process.env.NEXTAUTH_SECRET,
             },
             body: JSON.stringify({
               email: profile.email,
@@ -48,9 +49,11 @@ const handler = NextAuth({
 
           const data = await res.json();
 
-          if (data?.token) {
-            token.backendToken = data.token;
+          if (!data?.token) {
+            throw new Error("Backend token missing");
           }
+
+          token.backendToken = data.token;
 
         } catch (err) {
           console.error("Error creating backend session:", err);
