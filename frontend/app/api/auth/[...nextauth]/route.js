@@ -35,6 +35,7 @@ const handler = NextAuth({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "x-nextauth-secret": process.env.NEXTAUTH_SECRET,
             },
             body: JSON.stringify({
               email: profile.email,
@@ -43,14 +44,16 @@ const handler = NextAuth({
           });
 
           if (!res.ok) {
-            throw new Error("Backend session failed");
+            throw new Error(`Backend session failed with status ${res.status}`);
           }
 
           const data = await res.json();
 
-          if (data?.token) {
-            token.backendToken = data.token;
+          if (!data?.token) {
+            throw new Error("Backend token not returned");
           }
+
+          token.backendToken = data.token;
 
         } catch (err) {
           console.error("Error creating backend session:", err);
