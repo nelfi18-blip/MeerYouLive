@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
-  const [error] = useState("");
 
   useEffect(() => {
 
@@ -35,11 +34,5 @@ export default function DashboardPage() {
     return null;
   }
 
-  if (error) {
-    return null;
-  }
-
-  return (
-    <div></div>
-  );
+  return null;
 }
