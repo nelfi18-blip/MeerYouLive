@@ -44,19 +44,12 @@ const handler = NextAuth({
           });
 
           if (!res.ok) {
-            console.error("Backend returned:", res.status);
             token.backendToken = null;
             return token;
           }
 
           const data = await res.json();
-
-          if (data?.token) {
-            token.backendToken = data.token;
-          } else {
-            console.error("Backend token missing");
-            token.backendToken = null;
-          }
+          token.backendToken = data?.token || null;
 
         } catch (err) {
           console.error("Backend session error:", err);
