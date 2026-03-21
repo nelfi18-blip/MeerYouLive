@@ -74,12 +74,13 @@ export default function RegisterPage() {
       if (!res.ok || jsonParseError) {
         const rawMsg = data.message || "El servidor no respondió correctamente. Por favor, intente de nuevo más tarde.";
         const lowerMsg = rawMsg.toLowerCase();
-        // Show a friendlier message when the email is already registered.
+        // If the email is already registered, redirect to login so the user
+        // can simply sign in instead of being stuck on the register page.
         if (lowerMsg.includes("email") && lowerMsg.includes("exist")) {
-          setError("Esta cuenta ya existe. Inicia sesión o continúa con Google.");
-        } else {
-          setError(rawMsg);
+          router.push(`/login?email=${encodeURIComponent(email.trim())}`);
+          return;
         }
+        setError(rawMsg);
         return;
       }
 
