@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Logo from "../../components/Logo";
 
@@ -11,19 +11,38 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Pre-fill email if redirected here from the register page (email already exists).
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      setEmail(emailParam);
+      setInfo("Esta cuenta ya existe. Ingresa tu contraseña o continúa con Google.");
+    }
+  }, [searchParams]);
 
   // Redirect to dashboard if the user is already authenticated.
   useEffect(() => {
     if (status === "loading") return;
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (token || status === "authenticated") {
+    // If there is already a valid token in localStorage, go to dashboard.
+    if (token) {
+      router.replace("/dashboard");
+      return;
+    }
+    // If the user is authenticated via Google and a backend token is available,
+    // sync it to localStorage and redirect (avoids a second round-trip).
+    if (status === "authenticated" && session?.backendToken) {
+      localStorage.setItem("token", session.backendToken);
       router.replace("/dashboard");
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   const login = async () => {
     setError("");
@@ -99,6 +118,7 @@ export default function LoginPage() {
         <p className="login-subtitle">Inicia sesión para continuar</p>
 
         {error && <div className="login-error">{error}</div>}
+        {info && <div className="login-info">{info}</div>}
 
         <div className="login-form">
           <div className="form-group">
@@ -292,6 +312,17 @@ export default function LoginPage() {
           background: rgba(244, 67, 54, 0.12);
           border: 1px solid var(--error);
           color: var(--error);
+          border-radius: var(--radius-sm);
+          padding: 0.75rem 1rem;
+          font-size: 0.875rem;
+          margin-bottom: 1.25rem;
+        }
+
+        /* ---- Info (e.g. redirected from register) ---- */
+        .login-info {
+          background: rgba(66, 133, 244, 0.1);
+          border: 1px solid rgba(66, 133, 244, 0.5);
+          color: #4285F4;
           border-radius: var(--radius-sm);
           padding: 0.75rem 1rem;
           font-size: 0.875rem;

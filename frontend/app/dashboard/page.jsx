@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -23,7 +23,16 @@ export default function DashboardPage() {
     // Both email/password and Google users need a valid token in localStorage.
     const token = localStorage.getItem("token");
     if (!token) {
-      window.location.href = "/login";
+      if (status === "authenticated") {
+        // NextAuth session is active but there is no backend token, which
+        // would cause an infinite redirect loop between /dashboard and /login.
+        // Sign out of NextAuth first so the login page doesn't bounce back.
+        signOut({ callbackUrl: "/login" }).catch(() => {
+          window.location.href = "/login";
+        });
+      } else {
+        window.location.href = "/login";
+      }
       return;
     }
 
