@@ -11,6 +11,11 @@ export default function ProfilePage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ username: "", name: "", bio: "" });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -26,7 +31,10 @@ export default function ProfilePage() {
         if (!r.ok) throw new Error("Error al cargar perfil");
         return r.json();
       })
-      .then((d) => setUser(d))
+      .then((d) => {
+        setUser(d);
+        setEditForm({ username: d.username || "", name: d.name || "", bio: d.bio || "" });
+      })
       .catch(() => setError("No se pudo cargar el perfil"))
       .finally(() => setLoading(false));
   }, []);
@@ -34,6 +42,50 @@ export default function ProfilePage() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     signOut({ callbackUrl: "/login" });
+  };
+
+  const handleEdit = () => {
+    setSaveError("");
+    setSaveSuccess("");
+    setEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditing(false);
+    setEditForm({ username: user.username || "", name: user.name || "", bio: user.bio || "" });
+    setSaveError("");
+    setSaveSuccess("");
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaveError("");
+    setSaveSuccess("");
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/api/user/me`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSaveError(data.message || "Error al guardar los cambios");
+        return;
+      }
+      setUser(data);
+      setEditForm({ username: data.username || "", name: data.name || "", bio: data.bio || "" });
+      setSaveSuccess("Perfil actualizado correctamente");
+      setEditing(false);
+    } catch {
+      setSaveError("No se pudo conectar con el servidor");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const displayName = user?.username || user?.name || session?.user?.name || "Usuario";
@@ -53,17 +105,76 @@ export default function ProfilePage() {
 
       {!loading && user && (
         <>
+          {saveSuccess && <div className="success-banner">{saveSuccess}</div>}
+
           <div className="profile-card card">
             <div className="profile-avatar avatar-placeholder">{initial}</div>
             <div className="profile-info">
               <h1 className="profile-name">{displayName}</h1>
               {user.username && <p className="profile-handle">@{user.username}</p>}
               <p className="profile-email">{user.email}</p>
+              {user.bio && <p className="profile-bio">{user.bio}</p>}
               <span className={`profile-role badge ${user.role === "creator" ? "badge-accent" : "badge-muted"}`}>
                 {user.role === "creator" ? "🎥 Creador" : user.role === "admin" ? "🛡 Admin" : "👤 Usuario"}
               </span>
             </div>
+            <button className="btn btn-secondary edit-btn" onClick={handleEdit}>
+              ✏️ Editar perfil
+            </button>
           </div>
+
+          {editing && (
+            <form className="edit-form card" onSubmit={handleSave}>
+              <h2 className="edit-title">Editar perfil</h2>
+
+              {saveError && <div className="error-banner">{saveError}</div>}
+
+              <div className="form-group">
+                <label className="form-label">Nombre de usuario</label>
+                <input
+                  className="input"
+                  type="text"
+                  value={editForm.username}
+                  onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))}
+                  placeholder="tunombredeusuario"
+                  maxLength={30}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Nombre</label>
+                <input
+                  className="input"
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Tu nombre"
+                  maxLength={60}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Bio</label>
+                <textarea
+                  className="input bio-textarea"
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))}
+                  placeholder="Cuéntanos algo sobre ti…"
+                  maxLength={200}
+                  rows={3}
+                />
+              </div>
+
+              <div className="edit-actions">
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? "Guardando…" : "Guardar cambios"}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={handleCancelEdit} disabled={saving}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
 
           <div className="stats-row">
             <div className="stat-card card">
@@ -94,6 +205,12 @@ export default function ProfilePage() {
                 <span>💰</span>
                 <span>Comprar monedas</span>
               </Link>
+              {user.role === "creator" && (
+                <Link href="/live/start" className="action-item">
+                  <span>🔴</span>
+                  <span>Iniciar directo</span>
+                </Link>
+              )}
               <Link href="/explore" className="action-item">
                 <span>🔍</span>
                 <span>Explorar directos</span>
@@ -117,10 +234,19 @@ export default function ProfilePage() {
         /* Card */
         .profile-card {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 1.5rem;
           padding: 2rem;
           flex-wrap: wrap;
+          position: relative;
+        }
+
+        .edit-btn {
+          position: absolute;
+          top: 1.25rem;
+          right: 1.25rem;
+          font-size: 0.8rem;
+          padding: 0.4rem 0.875rem;
         }
 
         .profile-avatar {
@@ -135,6 +261,7 @@ export default function ProfilePage() {
         .profile-name { font-size: 1.4rem; font-weight: 800; color: var(--text); }
         .profile-handle { color: var(--text-muted); font-size: 0.9rem; }
         .profile-email { color: var(--text-muted); font-size: 0.85rem; }
+        .profile-bio { color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; max-width: 340px; }
 
         .badge {
           display: inline-block;
@@ -146,6 +273,24 @@ export default function ProfilePage() {
         }
         .badge-accent { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); }
         .badge-muted { background: var(--card-hover); color: var(--text-muted); border: 1px solid var(--border); }
+
+        /* Edit form */
+        .edit-form { padding: 1.75rem; display: flex; flex-direction: column; gap: 1.1rem; }
+        .edit-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+
+        .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+
+        .form-label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.07em;
+        }
+
+        .bio-textarea { resize: vertical; min-height: 72px; }
+
+        .edit-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
         /* Stats */
         .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem; }
@@ -208,11 +353,20 @@ export default function ProfilePage() {
           100% { background-position: -200% 0; }
         }
 
-        /* Error */
+        /* Error / success */
         .error-banner {
           background: rgba(244,67,54,0.1);
           border: 1px solid var(--error);
           color: var(--error);
+          border-radius: var(--radius-sm);
+          padding: 0.75rem 1rem;
+          font-size: 0.875rem;
+        }
+
+        .success-banner {
+          background: rgba(76,175,80,0.1);
+          border: 1px solid var(--success);
+          color: var(--success);
           border-radius: var(--radius-sm);
           padding: 0.75rem 1rem;
           font-size: 0.875rem;

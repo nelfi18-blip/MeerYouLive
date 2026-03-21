@@ -101,6 +101,16 @@ export default function DashboardPage() {
             <div className="dash-card-sub">Gestiona tu cuenta</div>
           </div>
         </Link>
+
+        {user?.role === "creator" && (
+          <Link href="/live/start" className="dash-card card">
+            <span className="dash-icon">🔴</span>
+            <div>
+              <div className="dash-card-title">Iniciar directo</div>
+              <div className="dash-card-sub">Comienza a transmitir en vivo</div>
+            </div>
+          </Link>
+        )}
       </div>
 
       <style jsx>{`

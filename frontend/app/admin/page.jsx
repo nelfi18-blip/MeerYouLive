@@ -10,60 +10,104 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
   const [error, setError] = useState("");
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const loadAdminData = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const [overviewRes, usersRes, reportsRes] = await Promise.all([
+        fetch(`${apiUrl}/api/admin/overview`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${apiUrl}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${apiUrl}/api/admin/reports`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+
+      if ([overviewRes, usersRes, reportsRes].some((r) => r.status === 401 || r.status === 403)) {
+        throw new Error("auth");
+      }
+      if (!overviewRes.ok || !usersRes.ok || !reportsRes.ok) throw new Error("server");
+
+      const [overviewData, usersData, reportsData] = await Promise.all([
+        overviewRes.json(),
+        usersRes.json(),
+        reportsRes.json(),
+      ]);
+
+      setStats(overviewData.stats || null);
+      setUsers(usersData.users || []);
+      setReports(reportsData.reports || []);
+    } catch (err) {
+      if (err.message === "auth") {
+        setError("No tienes permisos para acceder al panel de administrador.");
+      } else {
+        setError("Hubo un error cargando los datos del panel de administrador.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       window.location.href = "/login";
       return;
     }
-
-    const loadAdminData = async () => {
-      try {
-        const [overviewRes, usersRes, reportsRes] = await Promise.all([
-          fetch(`${apiUrl}/api/admin/overview`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${apiUrl}/api/admin/users`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${apiUrl}/api/admin/reports`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-
-        if (overviewRes.status === 401 || overviewRes.status === 403 ||
-            usersRes.status === 401 || usersRes.status === 403 ||
-            reportsRes.status === 401 || reportsRes.status === 403) {
-          throw new Error("auth");
-        }
-
-        if (!overviewRes.ok || !usersRes.ok || !reportsRes.ok) {
-          throw new Error("server");
-        }
-
-        const overviewData = await overviewRes.json();
-        const usersData = await usersRes.json();
-        const reportsData = await reportsRes.json();
-
-        setStats(overviewData.stats || null);
-        setUsers(usersData.users || []);
-        setReports(reportsData.reports || []);
-      } catch (err) {
-        console.error(err);
-        if (err.message === "auth") {
-          setError("No tienes permisos para acceder al panel de administrador.");
-        } else {
-          setError("Hubo un error cargando los datos del panel de administrador.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadAdminData();
   }, []);
+
+  const doAction = async (url, method, userId) => {
+    const token = localStorage.getItem("token");
+    setActionLoading(userId + url);
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Error");
+      // Refresh user list
+      const usersRes = await fetch(`${apiUrl}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (usersRes.ok) {
+        const data = await usersRes.json();
+        setUsers(data.users || []);
+      }
+    } catch {
+      // silently fail, page will still show last state
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const changeRole = async (userId, role) => {
+    const token = localStorage.getItem("token");
+    setActionLoading(userId + "role");
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/users/${userId}/role`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role }),
+      });
+      if (!res.ok) throw new Error("Error");
+      const usersRes = await fetch(`${apiUrl}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (usersRes.ok) {
+        const data = await usersRes.json();
+        setUsers(data.users || []);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -87,11 +131,11 @@ export default function AdminPage() {
 
       {stats && (
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "2rem" }}>
-          <Card title="Usuarios" value={stats.users} />
-          <Card title="Lives" value={stats.lives} />
-          <Card title="Reportes" value={stats.reports} />
-          <Card title="Suscripciones" value={stats.subscriptions} />
-          <Card title="Admins" value={stats.admins} />
+          <StatCard title="Usuarios" value={stats.users} />
+          <StatCard title="Lives" value={stats.lives} />
+          <StatCard title="Reportes" value={stats.reports} />
+          <StatCard title="Suscripciones" value={stats.subscriptions} />
+          <StatCard title="Admins" value={stats.admins} />
         </div>
       )}
 
@@ -104,7 +148,9 @@ export default function AdminPage() {
                 <Th>Nombre</Th>
                 <Th>Email</Th>
                 <Th>Rol</Th>
+                <Th>Estado</Th>
                 <Th>Registrado</Th>
+                <Th>Acciones</Th>
               </tr>
             </thead>
             <tbody>
@@ -112,13 +158,60 @@ export default function AdminPage() {
                 <tr key={u._id} style={{ borderBottom: "1px solid #334155" }}>
                   <Td>{u.name || u.username || "—"}</Td>
                   <Td>{u.email}</Td>
-                  <Td>{u.role}</Td>
+                  <Td>
+                    <select
+                      value={u.role}
+                      disabled={actionLoading === u._id + "role"}
+                      onChange={(e) => changeRole(u._id, e.target.value)}
+                      style={{
+                        background: "#0f172a",
+                        color: "#e2e8f0",
+                        border: "1px solid #334155",
+                        borderRadius: "4px",
+                        padding: "0.25rem 0.5rem",
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <option value="user">user</option>
+                      <option value="creator">creator</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </Td>
+                  <Td>
+                    <span style={{ color: u.isBlocked ? "#f87171" : "#4ade80", fontSize: "0.8rem" }}>
+                      {u.isBlocked ? "Bloqueado" : "Activo"}
+                    </span>
+                  </Td>
                   <Td>{new Date(u.createdAt).toLocaleDateString()}</Td>
+                  <Td>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      {u.isBlocked ? (
+                        <ActionBtn
+                          label="Desbloquear"
+                          color="#4ade80"
+                          disabled={!!actionLoading}
+                          onClick={() =>
+                            doAction(`${apiUrl}/api/admin/users/${u._id}/unblock`, "PATCH", u._id)
+                          }
+                        />
+                      ) : (
+                        <ActionBtn
+                          label="Bloquear"
+                          color="#f87171"
+                          disabled={!!actionLoading}
+                          onClick={() =>
+                            doAction(`${apiUrl}/api/admin/users/${u._id}/block`, "PATCH", u._id)
+                          }
+                        />
+                      )}
+                    </div>
+                  </Td>
                 </tr>
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={4} style={{ padding: "1rem", textAlign: "center", color: "#94a3b8" }}>
+                  <td colSpan={6} style={{ padding: "1rem", textAlign: "center", color: "#94a3b8" }}>
                     No hay usuarios
                   </td>
                 </tr>
@@ -164,7 +257,7 @@ export default function AdminPage() {
   );
 }
 
-function Card({ title, value }) {
+function StatCard({ title, value }) {
   return (
     <div
       style={{
@@ -196,3 +289,26 @@ function Td({ children }) {
     </td>
   );
 }
+
+function ActionBtn({ label, color, onClick, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        background: "transparent",
+        border: `1px solid ${color}`,
+        color,
+        borderRadius: "4px",
+        padding: "0.25rem 0.6rem",
+        fontSize: "0.8rem",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        transition: "background 0.15s",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+

@@ -42,4 +42,14 @@ const getLives = async (req, res) => {
   }
 };
 
-module.exports = { startLive, endLive, getLives };
+const getLiveById = async (req, res) => {
+  try {
+    const live = await Live.findOne({ _id: req.params.id, isLive: true }).populate("user", "username name");
+    if (!live) return res.status(404).json({ message: "Directo no encontrado o ya finalizado" });
+    res.json(live);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { startLive, endLive, getLives, getLiveById };
