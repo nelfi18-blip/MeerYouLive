@@ -60,6 +60,49 @@ router.post("/login", authLimiter, async (req, res) => {
   }
 });
 
+router.get("/check-admin", authLimiter, async (req, res) => {
+  try {
+    const adminExists = await User.exists({ role: "admin" });
+    res.json({ adminExists: Boolean(adminExists) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post("/setup", authLimiter, async (req, res) => {
+  try {
+    const adminExists = await User.exists({ role: "admin" });
+    if (adminExists) {
+      return res.status(409).json({ message: "Ya existe un administrador" });
+    }
+
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: "username, email y password son requeridos" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: "La contraseña debe tener al menos 6 caracteres" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const admin = await User.create({ username, email, password: hashedPassword, role: "admin" });
+    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    res.status(201).json({ message: "Administrador creado", token });
+  } catch (err) {
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyValue || {})[0];
+      if (field === "email") {
+        return res.status(400).json({ message: "Ya existe una cuenta con ese email" });
+      }
+      if (field === "username") {
+        return res.status(400).json({ message: "Ese nombre de usuario ya está en uso" });
+      }
+      return res.status(400).json({ message: "Ya existe una cuenta con esos datos" });
+    }
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.post("/google-session", async (req, res) => {
   const secret = req.headers["x-nextauth-secret"];
   if (!process.env.NEXTAUTH_SECRET || secret !== process.env.NEXTAUTH_SECRET) {
