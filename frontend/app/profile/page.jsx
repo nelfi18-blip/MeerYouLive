@@ -17,6 +17,12 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState("");
 
+  const [changingPwd, setChangingPwd] = useState(false);
+  const [pwdForm, setPwdForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [pwdSaving, setPwdSaving] = useState(false);
+  const [pwdError, setPwdError] = useState("");
+  const [pwdSuccess, setPwdSuccess] = useState("");
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -88,6 +94,41 @@ export default function ProfilePage() {
     }
   };
 
+  const handleChangePwd = async (e) => {
+    e.preventDefault();
+    setPwdError("");
+    setPwdSuccess("");
+    if (pwdForm.newPassword !== pwdForm.confirmPassword) {
+      setPwdError("Las contraseñas nuevas no coinciden");
+      return;
+    }
+    if (pwdForm.newPassword.length < 6) {
+      setPwdError("La nueva contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    setPwdSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/api/user/me/password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword: pwdForm.currentPassword, newPassword: pwdForm.newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPwdError(data.message || "Error al cambiar la contraseña");
+        return;
+      }
+      setPwdSuccess(data.message || "Contraseña actualizada correctamente");
+      setChangingPwd(false);
+      setPwdForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch {
+      setPwdError("No se pudo conectar con el servidor");
+    } finally {
+      setPwdSaving(false);
+    }
+  };
+
   const displayName = user?.username || user?.name || session?.user?.name || "Usuario";
   const initial = displayName[0].toUpperCase();
 
@@ -106,6 +147,7 @@ export default function ProfilePage() {
       {!loading && user && (
         <>
           {saveSuccess && <div className="success-banner">{saveSuccess}</div>}
+          {pwdSuccess && <div className="success-banner">{pwdSuccess}</div>}
 
           <div className="profile-card card">
             <div className="profile-avatar avatar-placeholder">{initial}</div>
@@ -118,9 +160,22 @@ export default function ProfilePage() {
                 {user.role === "creator" ? "🎥 Creador" : user.role === "admin" ? "🛡 Admin" : "👤 Usuario"}
               </span>
             </div>
-            <button className="btn btn-secondary edit-btn" onClick={handleEdit}>
-              ✏️ Editar perfil
-            </button>
+            <div className="profile-card-actions">
+              <button className="btn btn-secondary edit-btn" onClick={handleEdit}>
+                ✏️ Editar perfil
+              </button>
+              <button
+                className="btn btn-secondary change-pwd-btn"
+                onClick={() => {
+                  setChangingPwd(true);
+                  setSaveSuccess("");
+                  setPwdSuccess("");
+                  setPwdError("");
+                }}
+              >
+                🔑 Contraseña
+              </button>
+            </div>
           </div>
 
           {editing && (
@@ -170,6 +225,69 @@ export default function ProfilePage() {
                   {saving ? "Guardando…" : "Guardar cambios"}
                 </button>
                 <button type="button" className="btn btn-secondary" onClick={handleCancelEdit} disabled={saving}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
+
+          {changingPwd && (
+            <form className="edit-form card" onSubmit={handleChangePwd}>
+              <h2 className="edit-title">🔑 Cambiar contraseña</h2>
+
+              {pwdError && <div className="error-banner">{pwdError}</div>}
+
+              <div className="form-group">
+                <label className="form-label">Contraseña actual</label>
+                <input
+                  className="input"
+                  type="password"
+                  value={pwdForm.currentPassword}
+                  onChange={(e) => setPwdForm((f) => ({ ...f, currentPassword: e.target.value }))}
+                  placeholder="Tu contraseña actual"
+                  autoComplete="current-password"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Nueva contraseña</label>
+                <input
+                  className="input"
+                  type="password"
+                  value={pwdForm.newPassword}
+                  onChange={(e) => setPwdForm((f) => ({ ...f, newPassword: e.target.value }))}
+                  placeholder="Mínimo 6 caracteres"
+                  autoComplete="new-password"
+                  minLength={6}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Confirmar nueva contraseña</label>
+                <input
+                  className="input"
+                  type="password"
+                  value={pwdForm.confirmPassword}
+                  onChange={(e) => setPwdForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                  placeholder="Repite la nueva contraseña"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="edit-actions">
+                <button type="submit" className="btn btn-primary" disabled={pwdSaving}>
+                  {pwdSaving ? "Guardando…" : "Cambiar contraseña"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setChangingPwd(false);
+                    setPwdForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                    setPwdError("");
+                  }}
+                  disabled={pwdSaving}
+                >
                   Cancelar
                 </button>
               </div>

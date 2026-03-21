@@ -1,4 +1,5 @@
 const { Router } = require("express");
+const bcrypt = require("bcryptjs");
 const rateLimit = require("express-rate-limit");
 const { verifyToken } = require("../middlewares/auth.middleware.js");
 const User = require("../models/User.js");
@@ -55,6 +56,29 @@ router.patch("/me", userLimiter, verifyToken, async (req, res) => {
     const user = await User.findByIdAndUpdate(req.userId, updates, { new: true }).select("-password");
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
     res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.patch("/me/password", userLimiter, verifyToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: "La contraseña actual y la nueva son requeridas" });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: "La nueva contraseña debe tener al menos 6 caracteres" });
+  }
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) return res.status(401).json({ message: "La contraseña actual es incorrecta" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ message: "Contraseña actualizada correctamente" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
