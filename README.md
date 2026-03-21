@@ -156,6 +156,36 @@ In [Google Cloud Console](https://console.cloud.google.com) → **OAuth Client**
 | `STRIPE_WEBHOOK_SECRET`       | Stripe webhook signing secret                           |
 | `STRIPE_SUBSCRIPTION_PRICE_ID`| Stripe Price ID for the subscription plan               |
 
+## Initial admin setup
+
+After deploying both the backend and the frontend for the first time, you must create the administrator account before anyone can manage the platform.
+
+### Option A – Seed script (recommended for servers)
+
+Run the following command from the `backend/` directory. Set `ADMIN_PASSWORD` to your chosen password (the username defaults to `meetyoulive`):
+
+```bash
+cd backend
+ADMIN_PASSWORD=yourpassword npm run seed:admin
+
+# With all options explicit:
+ADMIN_USERNAME=meetyoulive ADMIN_EMAIL=admin@meetyoulive.net ADMIN_PASSWORD=yourpassword npm run seed:admin
+```
+
+The script connects to MongoDB using `MONGODB_URI` from your `.env` file, then **creates or updates** the admin account. You can re-run it at any time to reset the password.
+
+### Option B – Web setup page
+
+1. Open `https://<your-frontend-url>/setup` in a browser.  
+   (A **"¿Primera vez aquí? Configurar administrador"** link also appears at the bottom of the login page.)
+2. Fill in the form with your chosen **username**, **email**, and **password** (minimum 6 characters).
+3. Submit the form. The admin account is created and you are logged in automatically.
+4. The `/setup` page is disabled permanently once an admin account exists.
+
+### Changing the admin password later
+
+Log in, go to **Profile → 🔑 Contraseña**, enter your current password and choose a new one.
+
 ## Notes
 
 - `NEXTAUTH_SECRET` must be the same value in both Vercel and Render.
