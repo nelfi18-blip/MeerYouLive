@@ -22,6 +22,18 @@ export default function DashboardPage() {
 
     // Support both Google OAuth (backendToken synced above) and
     // email/password users (token already in localStorage from login)
+    if (status === "loading") return;
+
+    // For Google (NextAuth) users, sync the backend token to localStorage.
+    if (status === "authenticated") {
+      if (session?.backendToken) {
+        localStorage.setItem("token", session.backendToken);
+      } else {
+        localStorage.removeItem("token");
+      }
+    }
+
+    // Both email/password and Google users need a valid token in localStorage.
     const token = localStorage.getItem("token");
     if (!token) {
       window.location.href = "/login";
