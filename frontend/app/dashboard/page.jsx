@@ -11,19 +11,17 @@ export default function DashboardPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      window.location.href = "/login";
-      return;
-    }
-
-    if (status !== "authenticated") return;
-
-    if (session?.backendToken) {
+    // For Google OAuth sessions, sync the backend token to localStorage
+    if (status === "authenticated" && session?.backendToken) {
       localStorage.setItem("token", session.backendToken);
-    } else {
-      localStorage.removeItem("token");
     }
 
+    // During NextAuth initialization, proceed immediately if a localStorage token
+    // already exists (email/password users don't need to wait for NextAuth to resolve)
+    if (status === "loading" && !localStorage.getItem("token")) return;
+
+    // Support both Google OAuth (backendToken synced above) and
+    // email/password users (token already in localStorage from login)
     const token = localStorage.getItem("token");
     if (!token) {
       window.location.href = "/login";
@@ -33,7 +31,16 @@ export default function DashboardPage() {
     fetch(`${API_URL}/api/user/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => {
+        if (!r.ok) {
+          if (r.status === 401) {
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+          }
+          return null;
+        }
+        return r.json();
+      })
       .then((d) => { if (d) setUser(d); })
       .catch(() => {});
   }, [session, status]);
