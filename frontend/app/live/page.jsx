@@ -33,6 +33,9 @@ export default function LivePage() {
         <Link href="/explore" className="btn btn-secondary">
           🔍 Explorar todo
         </Link>
+        <Link href="/live/start" className="btn btn-primary">
+          🔴 Iniciar directo
+        </Link>
       </div>
 
       {error && <div className="error-banner">{error}</div>}

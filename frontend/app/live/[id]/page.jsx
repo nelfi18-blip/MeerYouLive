@@ -13,17 +13,16 @@ export default function LiveViewerPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`${API_URL}/api/lives`)
+    fetch(`${API_URL}/api/lives/${id}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Error al cargar el directo");
+        if (!res.ok) throw new Error("Directo no encontrado o ya finalizado");
         return res.json();
       })
       .then((data) => {
-        const found = data.find((l) => l._id === id);
-        if (!found) {
-          setError("Directo no encontrado o ya finalizado");
+        if (!data.isLive) {
+          setError("Este directo ya ha finalizado");
         } else {
-          setLive(found);
+          setLive(data);
         }
       })
       .catch(() => setError("No se pudo cargar el directo"));

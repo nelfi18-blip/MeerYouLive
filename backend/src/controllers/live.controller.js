@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const Live = require("../models/Live.js");
 
 const startLive = async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, category } = req.body;
   if (!title) return res.status(400).json({ message: "title es requerido" });
   try {
     const streamKey = crypto.randomBytes(16).toString("hex");
@@ -10,6 +10,7 @@ const startLive = async (req, res) => {
       user: req.userId,
       title,
       description,
+      category: category || "Otro",
       streamKey,
       isLive: true,
     });
@@ -42,4 +43,14 @@ const getLives = async (req, res) => {
   }
 };
 
-module.exports = { startLive, endLive, getLives };
+const getLiveById = async (req, res) => {
+  try {
+    const live = await Live.findById(req.params.id).populate("user", "username name");
+    if (!live) return res.status(404).json({ message: "Directo no encontrado" });
+    res.json(live);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { startLive, endLive, getLives, getLiveById };

@@ -11,20 +11,17 @@ export default function DashboardPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      window.location.href = "/login";
-      return;
-    }
+    // Still loading — wait before deciding
+    if (status === "loading") return;
 
-    if (status !== "authenticated") return;
-
-    if (session?.backendToken) {
+    // Sync backend token from Google session if available
+    if (status === "authenticated" && session?.backendToken) {
       localStorage.setItem("token", session.backendToken);
-    } else {
-      localStorage.removeItem("token");
     }
 
     const token = localStorage.getItem("token");
+
+    // No token at all — redirect to login
     if (!token) {
       window.location.href = "/login";
       return;
@@ -33,12 +30,20 @@ export default function DashboardPage() {
     fetch(`${API_URL}/api/user/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => {
+        if (r.status === 401) {
+          // Token expired or invalid — clear and redirect
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
       .then((d) => { if (d) setUser(d); })
       .catch(() => {});
   }, [session, status]);
 
-  if (status === "loading") return null;
+  if (status === "loading" && !user) return null;
 
   const displayName = user?.username || user?.name || session?.user?.name || "Usuario";
 
@@ -75,6 +80,14 @@ export default function DashboardPage() {
           <div>
             <div className="dash-card-title">Directos</div>
             <div className="dash-card-sub">Ve transmisiones en tiempo real</div>
+          </div>
+        </Link>
+
+        <Link href="/live/start" className="dash-card card">
+          <span className="dash-icon">🔴</span>
+          <div>
+            <div className="dash-card-title">Iniciar directo</div>
+            <div className="dash-card-sub">Empieza a transmitir ahora</div>
           </div>
         </Link>
 
