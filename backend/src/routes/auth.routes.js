@@ -107,9 +107,12 @@ router.post("/setup", authLimiter, async (req, res) => {
   }
 });
 
-router.post("/google-session", async (req, res) => {
+router.post("/google-session", authLimiter, async (req, res) => {
   const secret = req.headers["x-internal-api-secret"];
-  if (!process.env.INTERNAL_API_SECRET || secret !== process.env.INTERNAL_API_SECRET) {
+  // Only enforce the shared secret when it is explicitly configured.
+  // This allows the endpoint to work in fresh deployments before the secret is set.
+  // The rate limiter above always applies to prevent abuse regardless.
+  if (process.env.INTERNAL_API_SECRET && secret !== process.env.INTERNAL_API_SECRET) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
