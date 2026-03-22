@@ -8,8 +8,8 @@ const connectDB = async () => {
     console.log("✅ MongoDB conectado");
   } catch (error) {
     console.error("❌ Error MongoDB:", error.message);
-    throw error;
+    // No cerrar el proceso aquí para dejar que Render intente reconectar
   }
 };
 
-module.exports = { connectDB };
+module.exports = connectDB;
