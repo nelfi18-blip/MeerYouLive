@@ -25,7 +25,7 @@ function AuthSuccessHandler() {
     }
   }, [router, searchParams]);
 
-  return null;
+  return <p>Iniciando sesión...</p>;
 }
 
 /**
@@ -35,7 +35,7 @@ function AuthSuccessHandler() {
  */
 export default function AuthSuccessPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<p>Cargando...</p>}>
       <AuthSuccessHandler />
     </Suspense>
   );
