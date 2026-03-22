@@ -4,8 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { login as authLogin } from "@/lib/auth.service";
 
 function LoginForm() {
   const { data: session, status } = useSession();
@@ -51,33 +50,11 @@ function LoginForm() {
     setError("");
     setLoading(true);
 
-    if (!API_URL) {
-      setError("Error de configuración: no se puede contactar el servidor");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const res = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
+      const data = await authLogin({ email, password });
 
-      let data = {};
-      let jsonParseError = false;
-      try {
-        data = await res.json();
-      } catch {
-        jsonParseError = true;
-      }
-
-      if (!res.ok || jsonParseError) {
-        setError(
-          data.message ||
-            "El servidor no respondió correctamente. Por favor, intente de nuevo más tarde."
-        );
+      if (data.error) {
+        setError(data.error);
         return;
       }
 
