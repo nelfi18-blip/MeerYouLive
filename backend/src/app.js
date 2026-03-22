@@ -26,31 +26,27 @@ function buildAllowedOrigins(frontendUrl) {
   return [withWww, withoutWww];
 }
 
+const baseAllowedOrigins = [
+  "https://meetyoulive.net",
+  "https://www.meetyoulive.net",
+  "https://meetyoulive.onrender.com",
+  "http://localhost:3000",
+];
+
 const allowedOrigins = process.env.FRONTEND_URL
-  ? buildAllowedOrigins(process.env.FRONTEND_URL)
-  : null;
+  ? [...new Set([...baseAllowedOrigins, ...buildAllowedOrigins(process.env.FRONTEND_URL)])]
+  : baseAllowedOrigins;
 
 app.use(
   cors({
-    origin: allowedOrigins
-      ? (origin, cb) => {
-          if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-          if (/\.vercel\.app$/.test(origin)) return cb(null, true);
-          cb(new Error("Not allowed by CORS"));
-        }
-      : (origin, cb) => {
-          if (!origin) return cb(null, true);
-          if (/\.vercel\.app$/.test(origin)) return cb(null, true);
-          // Allow localhost in development; NODE_ENV !== "production" also covers
-          // the case where NODE_ENV is unset (local dev without explicit env config)
-          if (
-            process.env.NODE_ENV !== "production" &&
-            /^http:\/\/localhost(:\d+)?$/.test(origin)
-          )
-            return cb(null, true);
-          cb(new Error("Not allowed by CORS"));
-        },
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      if (/\.vercel\.app$/.test(origin)) return cb(null, true);
+      cb(new Error("Not allowed by CORS"));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 app.use("/api/webhooks", webhookRoutes);
@@ -59,6 +55,10 @@ app.use(passport.initialize());
 
 app.get("/", (req, res) => {
   res.json({ ok: true, service: "meetyoulive-backend" });
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "MeetYouLive API is running" });
 });
 
 app.use("/api/auth", authRoutes);
@@ -72,5 +72,11 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/moderation", moderationRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/videos", videoRoutes);
+
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Algo salió mal en el servidor" });
+});
 
 module.exports = app;

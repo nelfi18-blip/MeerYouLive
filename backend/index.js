@@ -11,8 +11,9 @@ async function startServer() {
   try {
     await connectDB();
 
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`✅ MeetYouLive API running on port ${PORT}`);
+      console.log(`🌍 Dominio autorizado: https://meetyoulive.net`);
     });
   } catch (error) {
     console.error("❌ Error starting backend:", error);
