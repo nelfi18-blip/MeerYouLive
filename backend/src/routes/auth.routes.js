@@ -108,8 +108,8 @@ router.post("/setup", authLimiter, async (req, res) => {
 });
 
 router.post("/google-session", async (req, res) => {
-  const secret = req.headers["x-nextauth-secret"];
-  if (!process.env.NEXTAUTH_SECRET || secret !== process.env.NEXTAUTH_SECRET) {
+  const secret = req.headers["x-internal-api-secret"];
+  if (!process.env.INTERNAL_API_SECRET || secret !== process.env.INTERNAL_API_SECRET) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 

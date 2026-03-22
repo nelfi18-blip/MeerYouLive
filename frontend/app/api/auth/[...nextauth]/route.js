@@ -1,11 +1,12 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+const apiUrl = process.env.API_URL;
 
 const useSecureCookies =
   process.env.NODE_ENV === "production" ||
   (process.env.NEXTAUTH_URL?.startsWith("https://") ?? false);
+
 const cookiePrefix = useSecureCookies ? "__Secure-" : "";
 
 const handler = NextAuth({
@@ -44,41 +45,38 @@ const handler = NextAuth({
       return account?.provider === "google";
     },
 
-    async redirect({ baseUrl }) {
-      return baseUrl;
-    },
-
     async jwt({ token, account, profile }) {
       if (account && profile) {
+        token.name = profile.name ?? null;
+        token.email = profile.email ?? null;
+        token.picture = profile.picture ?? null;
+        token.backendToken = null;
 
-        token.name = profile.name;
-        token.email = profile.email;
-        token.picture = profile.picture;
+        if (apiUrl) {
+          try {
+            const res = await fetch(`${apiUrl}/api/auth/google-session`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-internal-api-secret": process.env.INTERNAL_API_SECRET || "",
+              },
+              body: JSON.stringify({
+                email: profile.email,
+                name: profile.name,
+              }),
+            });
 
-        try {
-          const res = await fetch(`${apiUrl}/api/auth/google-session`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-nextauth-secret": process.env.NEXTAUTH_SECRET,
-            },
-            body: JSON.stringify({
-              email: profile.email,
-              name: profile.name,
-            }),
-          });
-
-          if (!res.ok) {
-            token.backendToken = null;
-            return token;
+            if (res.ok) {
+              const data = await res.json();
+              token.backendToken = data?.token || null;
+            } else {
+              console.error("Backend session error:", res.status, res.statusText);
+            }
+          } catch (err) {
+            console.error("Backend session error:", err);
           }
-
-          const data = await res.json();
-          token.backendToken = data?.token || null;
-
-        } catch (err) {
-          console.error("Backend session error:", err);
-          token.backendToken = null;
+        } else {
+          console.error("Missing API_URL environment variable");
         }
       }
 
@@ -87,9 +85,9 @@ const handler = NextAuth({
 
     async session({ session, token }) {
       session.user = {
-        name: token.name,
-        email: token.email,
-        image: token.picture,
+        name: token.name ?? null,
+        email: token.email ?? null,
+        image: token.picture ?? null,
       };
 
       session.backendToken = token.backendToken || null;
@@ -98,16 +96,17 @@ const handler = NextAuth({
     },
 
     async redirect({ url, baseUrl }) {
-      // Allow relative callback URLs (e.g. "/dashboard")
       if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allow absolute callback URLs on the same origin
+
       try {
-        if (new URL(url).origin === new URL(baseUrl).origin) return url;
+        if (new URL(url).origin === new URL(baseUrl).origin) {
+          return url;
+        }
       } catch {
-        // malformed URL – fall through to default
+        // URL inválida
       }
-      // Reject all external URLs to prevent open-redirect attacks
-      return baseUrl;
+
+      return `${baseUrl}/dashboard`;
     },
   },
 });
