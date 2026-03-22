@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { signUp } from "@/lib/auth.service";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -50,33 +49,15 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      if (!API_URL) {
-        setError("Error de configuración: no se puede contactar el servidor");
-        return;
-      }
+      const data = await signUp({ username, email, password });
 
-      const res = await fetch(`${API_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
-      });
-
-      let data = {};
-      let jsonParseError = false;
-      try {
-        data = await res.json();
-      } catch {
-        jsonParseError = true;
-      }
-
-      if (!res.ok || jsonParseError) {
-        const rawMsg = data.message || "El servidor no respondió correctamente. Por favor, intente de nuevo más tarde.";
-        const lowerMsg = rawMsg.toLowerCase();
+      if (data.error) {
+        const lowerMsg = data.error.toLowerCase();
         if (lowerMsg.includes("email") && lowerMsg.includes("exist")) {
           router.push(`/login?email=${encodeURIComponent(email.trim())}`);
           return;
         }
-        setError(rawMsg);
+        setError(data.error);
         return;
       }
 
