@@ -52,7 +52,7 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "x-nextauth-secret"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "x-internal-api-secret"],
   })
 );
 app.use((req, res, next) => {
