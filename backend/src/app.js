@@ -42,8 +42,12 @@ const allowedOrigins = process.env.FRONTEND_URL
 app.use(
   cors({
     origin: (origin, cb) => {
-      // Si no hay origen (como apps móviles o curl) o está en la lista, permitir
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Si no hay origen (como apps móviles o curl), está en la lista, o es un dominio de Vercel, permitir
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/.test(origin)
+      ) {
         cb(null, true);
       } else {
         console.log("Bloqueado por CORS:", origin);
